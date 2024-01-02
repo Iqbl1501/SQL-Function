@@ -1,0 +1,138 @@
+--soal 1
+SELECT
+    nama,
+    email,
+    bulan_lahir,
+    tanggal_registrasi
+FROM
+    rakamin_customer
+WHERE
+    (bulan_lahir IN ('Januari', 'Februari', 'Maret') 
+    AND tanggal_registrasi BETWEEN '2012-01-01' AND '2012-03-31')
+    AND (email LIKE '%yahoo.com' OR email LIKE '%roketmail.com')
+ORDER BY
+    tanggal_registrasi;
+
+
+--soal 2
+SELECT
+    id_order,
+    id_pelanggan,
+    harga,
+    harga + (harga * ppn) AS harga_setelah_ppn,
+    CASE
+        WHEN harga + (harga * ppn) <= 20000 THEN 'low'
+        WHEN harga + (harga * ppn) <= 50000 THEN 'medium'
+        ELSE 'high'
+    END AS spending_bucket
+FROM
+    rakamin_order
+ORDER BY
+    harga_setelah_ppn DESC;
+
+--soal 3
+SELECT
+    id_merchant,
+    COUNT(1) AS jumlah_order,
+    SUM(harga) AS total_pendapatan_sebelum_ppn
+FROM
+    rakamin_order
+GROUP BY
+    id_merchant
+ORDER BY
+    total_pendapatan_sebelum_ppn DESC;
+
+--soal 4
+SELECT
+    metode_bayar,
+    COUNT(1) AS frekuensi_penggunaannya
+FROM
+    rakamin_order
+GROUP BY
+    metode_bayar
+HAVING
+    COUNT(2) > 10
+ORDER BY
+    frekuensi_penggunaannya DESC;
+
+--soal 5
+SELECT
+    kota,
+    jumlah_pelanggan
+FROM (
+    SELECT
+        kota,
+        COUNT(DISTINCT id_pelanggan) AS jumlah_pelanggan
+    FROM
+        rakamin_customer_address
+    GROUP BY
+        kota
+) AS data_kota_pelanggan
+WHERE
+    jumlah_pelanggan = (
+        SELECT MIN(jumlah_pelanggan)
+        FROM (
+            SELECT
+                kota,
+                COUNT(DISTINCT id_pelanggan) AS jumlah_pelanggan
+            FROM
+                rakamin_customer_address
+            GROUP BY
+                kota
+        ) AS subq_min
+    )
+    OR jumlah_pelanggan = (
+        SELECT MAX(jumlah_pelanggan)
+        FROM (
+            SELECT
+                kota,
+                COUNT(DISTINCT id_pelanggan) AS jumlah_pelanggan
+            FROM
+                rakamin_customer_address
+            GROUP BY
+                kota
+        ) AS subq_max
+    );
+
+--soal 6
+SELECT
+    rm.id_merchant,
+    rm.nama_merchant,
+    tmp.metode_bayar,
+    tmp.frekuensi
+FROM
+    rakamin_merchant AS rm
+JOIN (
+    SELECT
+        metode_bayar,
+        COUNT(1) AS frekuensi,
+        id_merchant
+    FROM
+        rakamin_order
+    GROUP BY
+        metode_bayar,
+        id_merchant
+) AS tmp ON rm.id_merchant = tmp.id_merchant;
+
+--soal 7
+WITH tmp AS (
+    SELECT
+        id_pelanggan,
+        SUM(kuantitas) AS total_kuantitas
+    FROM
+        rakamin_order
+    GROUP BY
+        id_pelanggan
+)
+
+SELECT
+    tmp.id_pelanggan,
+    rc.nama,
+    rc.email,
+    tmp.total_kuantitas
+FROM
+    tmp
+LEFT JOIN
+    rakamin_customer AS rc ON tmp.id_pelanggan = rc.id_pelanggan
+WHERE
+    tmp.total_kuantitas > 5;
