@@ -1,1 +1,1 @@
-# Berikut ini adalah portofolio saya yang berkaitan dengan SQL Project
+This is a basic SQL query with all SQL functions. In this study case I use the Rakamin Food dataset
